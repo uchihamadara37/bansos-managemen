@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  serverExternalPackages: ["exceljs", "jspdf"],
+  allowedDevOrigins: ['172.30.67.176']
 };
 
 export default nextConfig;

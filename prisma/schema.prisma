@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+// generator client {
+//   provider = "prisma-client"
+//   output   = "../src/generated/prisma"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+// }
+
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  // url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  activityLogs ActivityLog[]
+
+  @@map("users")
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  type        TransactionType
+  amount      Decimal         @db.Decimal(15, 2)
+  description String          @db.Text
+  category    String          @db.VarChar(100)
+  date        DateTime
+  createdById String
+  createdBy   User            @relation(fields: [createdById], references: [id])
+
+  deletedAt DateTime? // soft delete
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([type, date])
+  @@index([category])
+  @@index([deletedAt])
+  @@map("transactions")
+}
+
+model ActivityLog {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  action    ActivityAction
+  entity    String         @default("Transaction") @db.VarChar(50)
+  entityId  String?
+  details   String         @db.Text
+  metadata  Json?
+  ipAddress String?        @db.VarChar(64)
+  timestamp DateTime       @default(now())
+
+  @@index([timestamp])
+  @@index([userId])
+  @@map("activity_logs")
+}

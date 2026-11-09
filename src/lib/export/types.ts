@@ -5,6 +5,8 @@ export type ExportRow = {
   description: string;
   amount: number;
   createdBy: string;
+  proofUrl: string | null;
+  proofNote: string | null;
 };
 
 export type ExportMeta = {

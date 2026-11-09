@@ -3,6 +3,9 @@ import type { ExportMeta, ExportRow } from "./types";
 
 const RUPIAH_FMT = '"Rp" #,##0';
 const BLUE = "FF1D4ED8";
+const LINK_BLUE = "FF2563EB";
+const COL_COUNT = 9; // A..I
+const LAST_COL = "I";
 
 export async function buildExcel(rows: ExportRow[], meta: ExportMeta) {
   const wb = new ExcelJS.Workbook();
@@ -12,19 +15,29 @@ export async function buildExcel(rows: ExportRow[], meta: ExportMeta) {
   const ws = wb.addWorksheet("Transaksi", { views: [{ state: "frozen", ySplit: 4 }] });
 
   // Lebar kolom
-  [6, 14, 14, 20, 50, 20, 20].forEach((w, i) => (ws.getColumn(i + 1).width = w));
+  [6, 14, 14, 20, 50, 20, 20, 16, 34].forEach((w, i) => (ws.getColumn(i + 1).width = w));
 
   // Judul
-  ws.mergeCells("A1:G1");
+  ws.mergeCells(`A1:${LAST_COL}1`);
   ws.getCell("A1").value = "Laporan Transaksi Donasi";
   ws.getCell("A1").font = { size: 16, bold: true, color: { argb: BLUE } };
-  ws.mergeCells("A2:G2");
+  ws.mergeCells(`A2:${LAST_COL}2`);
   ws.getCell("A2").value = meta.periodLabel;
   ws.getCell("A2").font = { italic: true, color: { argb: "FF64748B" } };
 
   // Header tabel (baris 4)
   const header = ws.getRow(4);
-  header.values = ["No", "Tanggal", "Tipe", "Kategori", "Deskripsi", "Nominal", "Dicatat Oleh"];
+  header.values = [
+    "No",
+    "Tanggal",
+    "Tipe",
+    "Kategori",
+    "Deskripsi",
+    "Nominal",
+    "Dicatat Oleh",
+    "Link Bukti",
+    "Keterangan Bukti",
+  ];
   header.eachCell((cell) => {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BLUE } };
@@ -42,6 +55,8 @@ export async function buildExcel(rows: ExportRow[], meta: ExportMeta) {
       r.description,
       r.amount,
       r.createdBy,
+      "-",
+      r.proofNote || "-",
     ]);
     row.getCell(2).numFmt = "dd/mm/yyyy";
     row.getCell(6).numFmt = RUPIAH_FMT;
@@ -49,10 +64,20 @@ export async function buildExcel(rows: ExportRow[], meta: ExportMeta) {
       color: { argb: r.type === "INCOME" ? "FF15803D" : "FFB91C1C" },
     };
     row.getCell(5).alignment = { wrapText: true, vertical: "top" };
+    row.getCell(9).alignment = { wrapText: true, vertical: "top" };
+
+    // Link bukti yang bisa diklik
+    if (r.proofUrl) {
+      const cell = row.getCell(8);
+      cell.value = { text: "Lihat bukti", hyperlink: r.proofUrl };
+      cell.font = { color: { argb: LINK_BLUE }, underline: true };
+    }
+
+    // Warna selang-seling, ditulis per kolom agar sel kosong ikut terwarnai
     if (i % 2 === 1) {
-      row.eachCell((c) => {
-        c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
-      });
+      for (let c = 1; c <= COL_COUNT; c++) {
+        row.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFF6FF" } };
+      }
     }
   });
 

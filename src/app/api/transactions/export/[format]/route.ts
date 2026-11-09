@@ -8,6 +8,7 @@ import { transactionQuerySchema } from "@/lib/validations/transaction";
 import { buildExcel } from "@/lib/export/excel";
 import { buildPdf } from "@/lib/export/pdf";
 import type { ExportMeta, ExportRow } from "@/lib/export/types";
+import { safeProofUrl } from "@/lib/proof";
 
 // export const runtime = "nodejs"; // exceljs & jspdf butuh Node runtime
 
@@ -34,6 +35,8 @@ export const GET = withAuth<{ format: string }>(["ADMIN", "USER"], async (req, {
     description: t.description,
     amount: Number(t.amount),
     createdBy: t.createdBy.name,
+    proofUrl: safeProofUrl(t.proofUrl), // hanya https, selain itu null
+    proofNote: t.proofNote,
   }));
 
   const totalIncome = rows.filter((r) => r.type === "INCOME").reduce((s, r) => s + r.amount, 0);

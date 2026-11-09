@@ -38,6 +38,8 @@ const emptyValues: FormIn = {
   description: "",
   category: "",
   date: new Date(),
+  proofUrl: "",
+  proofNote: "",
 };
 
 const toFormValues = (t: Transaction): FormIn => ({
@@ -46,9 +48,13 @@ const toFormValues = (t: Transaction): FormIn => ({
   description: t.description,
   category: t.category,
   date: new Date(t.date),
+  proofUrl: t.proofUrl ?? "",
+  proofNote: t.proofNote ?? "",
 });
 
 const typeLabel = (t: string) => (t === "INCOME" ? "Pemasukan" : "Pengeluaran");
+
+const orEmpty = (v?: string | null) => (v && v.trim() ? v : "(kosong)");
 
 // Daftar perubahan untuk dialog konfirmasi
 function diffRows(before: Transaction, after: TransactionInput) {
@@ -64,6 +70,8 @@ function diffRows(before: Transaction, after: TransactionInput) {
     format(new Date(before.date), "dd MMM yyyy", { locale: localeId }),
     format(after.date, "dd MMM yyyy", { locale: localeId })
   );
+  add("Link bukti", orEmpty(before.proofUrl), orEmpty(after.proofUrl));
+  add("Keterangan bukti", orEmpty(before.proofNote), orEmpty(after.proofNote));
   return rows;
 }
 
@@ -122,7 +130,7 @@ export function TransactionFormDialog() {
   return (
     <>
       <Dialog open={formOpen} onOpenChange={(o) => !o && !save.isPending && closeForm()}>
-        <DialogContent className="glass sm:max-w-lg">
+        <DialogContent className="glass max-h-[90dvh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Transaksi" : "Tambah Transaksi"}</DialogTitle>
             <DialogDescription>
@@ -197,6 +205,41 @@ export function TransactionFormDialog() {
               <FieldError message={errors.description?.message} />
             </div>
 
+            <div className="space-y-3 rounded-xl border border-white/60 bg-white/40 p-3">
+              <p className="text-sm font-medium text-slate-700">
+                Bukti transaksi <span className="font-normal text-slate-400">(opsional)</span>
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="proofUrl">Link Google Drive</Label>
+                <Input
+                  id="proofUrl"
+                  inputMode="url"
+                  autoComplete="off"
+                  placeholder="https://drive.google.com/..."
+                  className="bg-white/70"
+                  {...register("proofUrl")}
+                />
+                <FieldError message={errors.proofUrl?.message} />
+                <p className="text-xs text-slate-500">
+                  Atur akses file ke &quot;Siapa saja yang memiliki link&quot; agar donatur bisa membukanya. Sensor nomor
+                  rekening dan data pribadi sebelum mengunggah.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="proofNote">Keterangan bukti</Label>
+                <Textarea
+                  id="proofNote"
+                  rows={2}
+                  placeholder="mis. Transfer BCA, tanda terima di sekretariat"
+                  className="bg-white/70"
+                  {...register("proofNote")}
+                />
+                <FieldError message={errors.proofNote?.message} />
+              </div>
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeForm} disabled={save.isPending}>
                 Batal
@@ -228,7 +271,7 @@ export function TransactionFormDialog() {
             {editing &&
               pending &&
               diffRows(editing, pending).map((r) => (
-                <li key={r.label}>
+                <li key={r.label} className="break-all">
                   <span className="font-medium text-slate-700">{r.label}:</span>{" "}
                   <span className="text-rose-600 line-through">{r.from}</span>{" "}
                   <span className="text-slate-400">→</span>{" "}

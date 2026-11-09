@@ -14,6 +14,8 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { formatRupiah } from "@/lib/format";
 import { useUiStore } from "@/stores/ui-store";
 import type { Transaction } from "@/types";
+import { ExternalLink } from "lucide-react";
+import { safeProofUrl } from "@/lib/proof";
 
 export function TransactionsTable() {
   const isAdmin = useUser().role === "ADMIN";
@@ -48,14 +50,45 @@ export function TransactionsTable() {
         header: () => <div className="text-right">Nominal</div>,
         cell: ({ row }) => (
           <div
-            className={`text-right font-mono font-sm ${
-              row.original.type === "INCOME" ? "text-blue-700" : "text-rose-600"
-            }`}
+            className={`text-right font-mono font-sm ${row.original.type === "INCOME" ? "text-blue-700" : "text-rose-600"
+              }`}
           >
             {row.original.type === "INCOME" ? "+" : "-"}
             {formatRupiah(row.original.amount)}
           </div>
         ),
+      },
+      {
+        id: "proof",
+        header: "Bukti",
+        cell: ({ row }) => {
+          const { proofUrl, proofNote, type } = row.original;
+          const href = safeProofUrl(proofUrl);
+
+          if (!href && !proofNote) {
+            return type === "EXPENSE" ? (
+              <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">Belum ada bukti</Badge>
+            ) : (
+              <span className="text-slate-400">-</span>
+            );
+          }
+
+          return (
+            <div className="max-w-55 space-y-0.5">
+              {href && (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Lihat bukti
+                </a>
+              )}
+              {proofNote && <p className="line-clamp-2 text-xs text-slate-500">{proofNote}</p>}
+            </div>
+          );
+        },
       },
       { id: "by", header: "Dicatat Oleh", cell: ({ row }) => row.original.createdBy.name },
     ];

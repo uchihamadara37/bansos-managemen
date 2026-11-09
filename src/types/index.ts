@@ -7,6 +7,8 @@ export type Transaction = {
   description: string;
   category: string;
   date: string;
+  proofUrl: string | null;
+  proofNote: string | null;
   createdAt: string;
   createdBy: { id: string; name: string };
 };

@@ -25,13 +25,18 @@ const FIELD_LABEL: Record<string, string> = {
   category: "Kategori",
   description: "Deskripsi",
   date: "Tanggal",
+  proofUrl: "Link bukti",
+  proofNote: "Keterangan bukti",
 };
+
+const show = (v: unknown) => (v === null || v === undefined || v === "" ? "(kosong)" : String(v));
+
 
 function Changes({ log }: { log: ActivityLogItem }) {
   const { before, after } = log.metadata ?? {};
   if (log.action !== "UPDATE" || !before || !after) return null;
 
-  const changed = Object.keys(FIELD_LABEL).filter((k) => String(before[k]) !== String(after[k]));
+  const changed = Object.keys(FIELD_LABEL).filter((k) => show(before[k]) !== show(after[k]));
   if (!changed.length) return null;
 
   return (
@@ -39,10 +44,10 @@ function Changes({ log }: { log: ActivityLogItem }) {
       <summary className="cursor-pointer text-blue-600">Lihat perubahan</summary>
       <ul className="mt-1 space-y-0.5 rounded-md bg-blue-50 p-2">
         {changed.map((k) => (
-          <li key={k}>
+          <li key={k} className="break-all">
             <span className="font-medium">{FIELD_LABEL[k]}:</span>{" "}
-            <span className="text-rose-600 line-through">{String(before[k])}</span> →{" "}
-            <span className="text-blue-700">{String(after[k])}</span>
+            <span className="text-rose-600 line-through">{show(before[k])}</span> →{" "}
+            <span className="text-blue-700">{show(after[k])}</span>
           </li>
         ))}
       </ul>
